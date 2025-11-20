@@ -1,0 +1,66 @@
+/* 
+=========================================================================================
+STORED PROCEDURE: LOAD BRONZE LAYER. SOURCE -> BRONZE LAYER
+=========================================================================================
+Script purpose:
+	This stored procedure loads data into the 'bronze layer 'schema from CSV files.
+	The procedure :
+	1. Truncates the bronze tables before loading data.
+	2. Uses the COPy command to load data from the CSV files to the bronze tables.
+
+Parameters:
+	NONE
+	This stored procedure does not accept any parameters or return any values
+
+Excecution:
+- Also measures the run time for the procedure
+
+DO $$
+DECLARE
+    t_start timestamptz := clock_timestamp();
+    t_end   timestamptz;
+BEGIN
+    CALL bronze.load_bronze();
+
+    t_end := clock_timestamp();
+    RAISE NOTICE 'Procedure ran in % ms', EXTRACT(MILLISECOND FROM t_end - t_start);
+END $$;
+
+=========================================================================================
+*/
+
+
+CREATE OR REPLACE PROCEDURE bronze.load_bronze()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+
+
+	RAISE NOTICE '===========================';
+	RAISE NOTICE 'Loading data into the bronze layer';
+
+	RAISE NOTICE '>>Truncating data into bronze.price_prediction';
+
+	TRUNCATE TABLE bronze.price_prediction;
+
+	RAISE NOTICE '>> Loading data into bronze.price_prediction';
+	
+	COPY bronze.price_prediction 
+	FROM '/Users/elethu/Desktop/data ware_house project/car_price_prediction_.csv'
+	WITH (FORMAT CSV, DELIMITER ';', HEADER
+	); 
+
+	RAISE NOTICE '===============================';
+	RAISE NOTICE '>>Truncating table: bronze.bmw_sales';
+	
+	TRUNCATE TABLE bronze."bronze.bmw_sales";
+	COPY "bronze.bmw_sales"
+	FROM '/Users/elethu/Desktop/data ware_house project/BMW sales data (2010-2024) (1).csv'
+	WITH (FORMAT CSV, DELIMITER ';', HEADER
+	);
+EXCEPTION 
+	WHEN SQLSTATE '42501' THEN 
+	RAISE NOTICE 'ERROR: A FILE COULD NOT BE OPENED';
+
+END;
+$$;
